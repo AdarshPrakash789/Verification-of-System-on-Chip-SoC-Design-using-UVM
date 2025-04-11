@@ -1,0 +1,2 @@
+# Verification-of-System-on-Chip-SoC-Design-using-UVM
+This project showcases a Universal Verification Methodology (UVM)-based verification framework for a System-on-Chip (SoC) design comprising multiple subsystems including CPU, DMA, Memory, and peripheral interfaces such as I2C, SPI, and AMBA. The focus was to establish a modular and reusable testbench architecture that ensures seamless integration.
