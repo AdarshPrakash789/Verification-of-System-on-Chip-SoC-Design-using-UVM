@@ -1,156 +1,198 @@
-# Verification of System-on-Chip (SoC) Design using UVM
+// Project: Verification of System-on-Chip (SoC) Design
+// Author: Adarsh Prakash
+// Tools Used: SystemVerilog, UVM, Synopsys VCS
+// Description: A modular UVM-based verification environment for SoC integration with I2C, SPI, and AMBA interfaces.
+// Functional and code coverage techniques applied to ensure thorough validation of subsystem interactions.
 
-## Project Overview
-This project showcases a Universal Verification Methodology (UVM)-based verification framework for a System-on-Chip (SoC) design comprising multiple subsystems including CPU, DMA, Memory, and peripheral interfaces such as I2C, SPI, and AMBA. The focus was to establish a modular and reusable testbench architecture that ensures seamless integration, system-level reliability, and coverage completeness.
+/*
+Directory Structure:
 
----
+soc_uvm_verification/
+│
+├── Makefile                       VCS build and run script
+├── README.md                      Project documentation
+│
+├── tb/                            Top-level testbench and interface
+│   ├── tb_top.sv
+│   └── soc_if.sv
+│
+├── tests/                         UVM testcases
+│   └── soc_test.sv
+│
+├── env/                           UVM environment and agents
+│   └── soc_env.sv
+│
+├── tlm/                           Transaction-Level Models
+│   ├── i2c_transaction.sv
+│   ├── spi_transaction.sv
+│   └── amba_transaction.sv
+│
+├── coverage/                      Coverage modules
+│   └── soc_coverage.sv
+│
+└── logs/                          Simulation logs (auto-generated)
+*/
 
-## Key Highlights
-- Built a complete UVM-based verification environment for SoC with multiple integrated modules
-- Developed interface-specific agents for **I2C**, **SPI**, and **AMBA** protocol components
-- Reduced integration bugs by 40% through layered and scalable testbench design
-- Created **transaction-level models (TLMs)** to represent SoC subsystems and enable higher abstraction
-- Applied **functional and code coverage** strategies for system-level assurance
-- Used **VCS** for simulation and **Verdi** for waveform-level debugging
+`include "uvm_macros.svh"
+import uvm_pkg::*;
 
----
+module tb_top;
 
-## Tools & Technologies
-- **Languages**: SystemVerilog
-- **Methodology**: UVM (Universal Verification Methodology)
-- **Simulator**: Synopsys VCS
-- **Debugging**: Synopsys Verdi
-- **Automation**: TCL
+  logic clk;
+  logic rst_n;
 
----
+  // Clock and Reset Generation
+  initial begin
+    clk = 0;
+    forever #5 clk = ~clk;
+  end
 
-## Directory Structure
-```bash
-SoC_Verification_UVM/
-├── rtl/
-│   ├── soc_top.sv              # SoC top-level RTL
-│   ├── cpu.sv                  # CPU module
-│   ├── dma.sv                  # DMA module
-│   ├── mem.sv                  # Memory module
-│   └── peripherals/
-│       ├── i2c.sv
-│       ├── spi.sv
-│       └── amba.sv
-├── tb/
-│   ├── env/
-│   │   ├── soc_env.sv
-│   │   ├── agents/
-│   │   │   ├── i2c_agent.sv
-│   │   │   ├── spi_agent.sv
-│   │   │   └── amba_agent.sv
-│   │   ├── soc_scoreboard.sv
-│   │   └── soc_virtual_sequencer.sv
-│   ├── seq/
-│   │   ├── base_sequence.sv
-│   │   ├── i2c_sequence.sv
-│   │   ├── spi_sequence.sv
-│   │   └── amba_sequence.sv
-│   ├── test/
-│   │   ├── base_test.sv
-│   │   └── full_integration_test.sv
-│   ├── interface/
-│   │   ├── i2c_if.sv
-│   │   ├── spi_if.sv
-│   │   └── amba_if.sv
-│   └── top_tb.sv
-├── coverage/
-│   ├── functional_coverage.sv
-│   └── code_coverage.tcl
-├── scripts/
-│   └── run.tcl
-├── Makefile
-├── README.md
-└── LICENSE
-```
+  initial begin
+    rst_n = 0;
+    #20 rst_n = 1;
+  end
 
----
+  // DUT instance
+  SoC DUT (
+    .clk(clk),
+    .rst_n(rst_n)
+  );
 
-## Sample RTL (soc_top.sv)
-```systemverilog
-module soc_top(
-    input logic clk,
-    input logic rst_n
-);
-    cpu     u_cpu     (.clk(clk), .rst_n(rst_n));
-    dma     u_dma     (.clk(clk), .rst_n(rst_n));
-    mem     u_mem     (.clk(clk), .rst_n(rst_n));
-    i2c     u_i2c     (.clk(clk), .rst_n(rst_n));
-    spi     u_spi     (.clk(clk), .rst_n(rst_n));
-    amba    u_amba    (.clk(clk), .rst_n(rst_n));
+  // UVM Environment
+  initial begin
+    run_test("soc_test");
+  end
+
 endmodule
-```
 
----
+class soc_test extends uvm_test;
+  `uvm_component_utils(soc_test)
 
-## Environment Structure (soc_env.sv)
-```systemverilog
+  soc_env env;
+
+  function new(string name = "soc_test", uvm_component parent = null);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    env = soc_env::type_id::create("env", this);
+  endfunction
+
+  task run_phase(uvm_phase phase);
+    phase.raise_objection(this);
+    super.run_phase(phase);
+    #5000;
+    phase.drop_objection(this);
+  endtask
+
+endclass
+
 class soc_env extends uvm_env;
-    i2c_agent      i2c;
-    spi_agent      spi;
-    amba_agent     amba;
-    soc_scoreboard sb;
+  `uvm_component_utils(soc_env)
 
-    function void build_phase(uvm_phase phase);
-        i2c = i2c_agent::type_id::create("i2c", this);
-        spi = spi_agent::type_id::create("spi", this);
-        amba = amba_agent::type_id::create("amba", this);
-        sb   = soc_scoreboard::type_id::create("sb", this);
-    endfunction
+  i2c_agent i2c;
+  spi_agent spi;
+  amba_agent amba;
+
+  function new(string name = "soc_env", uvm_component parent = null);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    i2c = i2c_agent::type_id::create("i2c", this);
+    spi = spi_agent::type_id::create("spi", this);
+    amba = amba_agent::type_id::create("amba", this);
+  endfunction
+
 endclass
-```
 
----
+interface soc_if(input bit clk);
+  logic rst_n;
+  logic [7:0] i2c_data;
+  logic [7:0] spi_data;
+  logic [31:0] amba_data;
+endinterface
 
-## Sample Test (full_integration_test.sv)
-```systemverilog
-class full_integration_test extends base_test;
-    task run_phase(uvm_phase phase);
-        i2c_sequence i2c_seq = i2c_sequence::type_id::create("i2c_seq");
-        spi_sequence spi_seq = spi_sequence::type_id::create("spi_seq");
-        amba_sequence amba_seq = amba_sequence::type_id::create("amba_seq");
+class i2c_transaction extends uvm_sequence_item;
+  rand bit [7:0] data;
+  `uvm_object_utils(i2c_transaction)
 
-        i2c_seq.start(env.i2c.sequencer);
-        spi_seq.start(env.spi.sequencer);
-        amba_seq.start(env.amba.sequencer);
-    endtask
+  function new(string name = "i2c_transaction");
+    super.new(name);
+  endfunction
 endclass
-```
 
----
+class spi_transaction extends uvm_sequence_item;
+  rand bit [7:0] data;
+  `uvm_object_utils(spi_transaction)
 
-## TCL Script (scripts/run.tcl)
-```tcl
-vcs -full64 -sverilog +acc +vpi -debug_access+all \
-    rtl/*.sv rtl/peripherals/*.sv \
-    tb/top_tb.sv \
-    +incdir+tb/env +incdir+tb/test +incdir+tb/seq +incdir+tb/interface \
-    -o simv
+  function new(string name = "spi_transaction");
+    super.new(name);
+  endfunction
+endclass
 
-./simv +UVM_TESTNAME=full_integration_test
-```
+class amba_transaction extends uvm_sequence_item;
+  rand bit [31:0] data;
+  `uvm_object_utils(amba_transaction)
 
----
+  function new(string name = "amba_transaction");
+    super.new(name);
+  endfunction
+endclass
 
-## Results
-- Verified SoC-level operation under full integration
-- All subsystem interfaces validated using directed and random sequences
-- Reduced integration bugs by 40% through layered verification
-- Applied TLMs for subsystem abstraction and scalability
-- Achieved over 95% functional coverage and 100% code coverage
-- Debug trace enabled for all tests using Verdi
+module soc_coverage;
+  logic [7:0] i2c_cov_data;
+  logic [7:0] spi_cov_data;
+  logic [31:0] amba_cov_data;
 
----
+  covergroup soc_cg;
+    coverpoint i2c_cov_data;
+    coverpoint spi_cov_data;
+    coverpoint amba_cov_data;
+  endgroup
 
-## License
-This project is licensed under the MIT License.
+  soc_cg cg = new();
 
----
+  always @(posedge clk) begin
+    cg.sample();
+  end
+endmodule
 
-## Author
-**Adarsh Prakash**  
-[LinkedIn Profile](https://www.linkedin.com/in/adarsh-prakash-a583a3259/)
+// Save as Makefile
+
+VCS = vcs
+SRCS = tb_top.sv soc_test.sv soc_env.sv soc_if.sv soc_coverage.sv
+
+all:
+	$(VCS) -full64 -sverilog +acc +vpi -timescale=1ns/1ps $(SRCS) -o simv
+	./simv
+
+clean:
+	rm -rf simv csrc ucli.key *.vpd *.log *.daidir
+
+/*
+System-on-Chip (SoC) Verification Using UVM
+
+This project presents a professional UVM-based testbench for verifying a System-on-Chip (SoC) design integrating multiple subsystems including CPU, DMA, Memory, and standard protocols such as I2C, SPI, and AMBA.
+
+Tools & Technologies:
+SystemVerilog, UVM, Synopsys VCS
+
+Key Features:
+- Modular UVM testbench
+- I2C, SPI, AMBA support
+- TLM abstraction
+- Functional and code coverage
+
+How to Run:
+1. Clone repository
+2. Navigate to folder
+3. Run `make`
+
+Author:
+Adarsh Prakash
+LinkedIn: https://www.linkedin.com/in/adarsh-prakash-a583a3259
+Email: kumaradarsh663@gmail.com
+*/
