@@ -1,37 +1,27 @@
 // Project: Verification of System-on-Chip (SoC) Design
 // Author: Adarsh Prakash
 // Tools Used: SystemVerilog, UVM, Synopsys VCS
-// Description: A modular UVM-based verification environment for SoC integration with I2C, SPI, and AMBA interfaces.
-// Functional and code coverage techniques applied to ensure thorough validation of subsystem interactions.
+// Description: A modular UVM-based verification environment for SoC integration with I2C, SPI, and AMBA interfaces. Functional and code coverage techniques applied to ensure thorough validation of subsystem interactions.
 
-/*
-Directory Structure:
-
+// Directory Structure:
+//
 soc_uvm_verification/
-│
 ├── Makefile                       VCS build and run script
 ├── README.md                      Project documentation
-│
 ├── tb/                            Top-level testbench and interface
 │   ├── tb_top.sv
 │   └── soc_if.sv
-│
 ├── tests/                         UVM testcases
 │   └── soc_test.sv
-│
 ├── env/                           UVM environment and agents
 │   └── soc_env.sv
-│
 ├── tlm/                           Transaction-Level Models
 │   ├── i2c_transaction.sv
 │   ├── spi_transaction.sv
 │   └── amba_transaction.sv
-│
 ├── coverage/                      Coverage modules
 │   └── soc_coverage.sv
-│
 └── logs/                          Simulation logs (auto-generated)
-*/
 
 `include "uvm_macros.svh"
 import uvm_pkg::*;
@@ -143,6 +133,7 @@ class amba_transaction extends uvm_sequence_item;
 endclass
 
 module soc_coverage;
+  logic clk;
   logic [7:0] i2c_cov_data;
   logic [7:0] spi_cov_data;
   logic [31:0] amba_cov_data;
