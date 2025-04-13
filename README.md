@@ -3,8 +3,9 @@
 // Tools Used: SystemVerilog, UVM, Synopsys VCS
 // Description: A modular UVM-based verification environment for SoC integration with I2C, SPI, and AMBA interfaces. Functional and code coverage techniques applied to ensure thorough validation of subsystem interactions.
 
-// Directory Structure:
-//
+/*
+Directory Structure:
+
 soc_uvm_verification/
 ├── Makefile                       VCS build and run script
 ├── README.md                      Project documentation
@@ -22,6 +23,7 @@ soc_uvm_verification/
 ├── coverage/                      Coverage modules
 │   └── soc_coverage.sv
 └── logs/                          Simulation logs (auto-generated)
+*/
 
 `include "uvm_macros.svh"
 import uvm_pkg::*;
