@@ -1,6 +1,6 @@
 # Verification of System-on-Chip (SoC) Design
 
-## Project B: Verification of System-on-Chip (SoC) Design
+## Project: Verification of System-on-Chip (SoC) Design
 
 ### Tools: UVM, SystemVerilog, VCS
 
